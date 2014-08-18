@@ -59,11 +59,18 @@ sub getDB {
             type => "double",
             order => 2,
          },
+         "deleted" => {
+            type => $DELETEDCOLUMNNAME,
+            order => 5,
+            # hidden => 1,
+         },
       }
    };
-   $DB->{tables}->{"users"} = {
+   $DB->{tables}->{"users"} =
+   {
       idcolumnname => "id",
-      columns => {
+      columns =>
+      {
          "id" => {
             type => $UNIQIDCOLUMNNAME,
          },
@@ -89,7 +96,7 @@ sub getDB {
             order => 5,
          },
          "deleted" => {
-            type => "boolean",
+            type => $DELETEDCOLUMNNAME,
             order => 6,
          },
       }

@@ -30,9 +30,8 @@ sub onAuthenticate {
       return undef;
    }
 
-   $poe_kernel->yield(sendToQX => "reset");
    my $return_value = $self->SUPER::onAuthenticate($options) ;
-
+        #tests if we are loged in
    if ( !$options->{curSession}->{"users".$TSEP."id"} ) {
        $poe_kernel->yield(sendToQX => "addbutton ".CGI::escape("")." ".CGI::escape("new_account_button")." ".CGI::escape("Neuen Benuter anlegen")." ".CGI::escape("")." ".CGI::escape("job=neweditentry,table=users"));
    }
@@ -54,10 +53,11 @@ sub onAuthenticated {
         );
         return undef;
     }
-    # $options->{noReset}++ ;
     
     my $return = $self->SUPER::onAuthenticated($options);
 
+    # show the projects button, to open table for projects
+       # only show this button if user is not admin
     if (defined(my $err =
                     $self->{dbm}->checkRights( $options->{curSession}, $ADMIN )
                )

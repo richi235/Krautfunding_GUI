@@ -5,6 +5,7 @@ use warnings;
 use ADBGUI::BasicVariables;
 use ADBGUI::Tools qw(Log);
 use POE ;
+# use Data::Dumper ; # can be used for debug output
 
 
 our @ISA;
@@ -84,7 +85,32 @@ sub onClientData {
         if ($options->{job} eq "doubleclick_on_projects")
         {
             $self->{dbm}->setFilter({ curSession => $options->{curSession}, table => "transactions" , filter => { "transactions".$TSEP."project_id" => $options->{id} } });
-            $self->onShow({table => "transactions", curSession => $options->{curSession} , connection => $options->{connection}  });
+
+            # variable for the project name, filled later
+            my $project_name ;
+            # get the name of the clicked table (we know only the id) from the Database Backend
+            my $db  =  $self->{dbm}->getDBBackend($options->{table});
+            my $result_set = $db->getDataSet({
+                table => $options->{table},
+                session => $options->{curSession},
+                id => $options->{id}
+            }) ;
+
+            # use Dumper for debugging output
+            # print (Dumper($result_set));
+            # die ;
+            
+            
+               # only work with result set if we got correct data
+            if ( ref($result_set) eq "ARRAY" ) {
+                $project_name = $result_set->[0]->[0]->{$options->{table}.$TSEP.'Name'};
+            } else {
+                 log("Wanted to get project name from id, got no or corrupted data");
+            }
+            
+
+            # display the window with the correct title
+            $self->onShow({table => "transactions", curSession => $options->{curSession} , connection => $options->{connection} , windowtitle => "Spenden fuer: $project_name"  });
             return ;
         }
        

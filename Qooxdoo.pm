@@ -66,10 +66,11 @@ sub onAuthenticated {
         $poe_kernel->yield(sendToQX => "addbutton ".CGI::escape("")." ".CGI::escape("richibutton")." ".CGI::escape("Projekte")." ".CGI::escape("")." ".CGI::escape("job=show,table=projects"));
     }
 
-    
+
+    # display the projects table per default after login
     $self->onShow({table => "projects", curSession => $options->{curSession} , connection => $options->{connection}  }) ;
     
-
+    # return the return value of the corresponding underliying framework method
     return $return;
 }
 sub onClientData {

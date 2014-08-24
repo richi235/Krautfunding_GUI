@@ -96,10 +96,6 @@ sub onClientData {
                 id => $options->{id}
             }) ;
 
-            # use Dumper for debugging output
-            # print (Dumper($result_set));
-            # die ;
-            
             
                # only work with result set if we got correct data
             if ( ref($result_set) eq "ARRAY" ) {

@@ -117,6 +117,7 @@ sub getDB {
             order => 2,
          },
          "user_id" => {
+            readonly => 1,
             label => "Spender",
             showInSelect => 1,
             linkto => "users",

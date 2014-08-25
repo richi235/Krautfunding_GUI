@@ -36,17 +36,17 @@ sub NewUpdateData
     # make that: if user creates new transaction automatically his user id is set for the transaction
     if ($options->{table} eq "transactions" )
     {                                #checkRights returns a undefined, if user and session match and an defined value otherwise
-        if (defined(my $err = $self->checkRights($options->{curSession},$ADMIN) ))
+        if (defined($self->checkRights($options->{curSession},$ADMIN) ))
         {
             $options->{columns}->{$options->{table}.$TSEP."user_id"} = $options->{curSession}->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME};
         }
     }
 
     
-    # makes thet: if a new user registers, set the correct admin or deleted flag for this user.
+    # makes that: if a new user registers, set the correct admin and deleted flag for this user.
     if ($options->{table} eq "users" )
     {                                #checkRights returns undefined, if user and session match and an defined value otherwise
-        if (defined(my $err = $self->checkRights($options->{curSession},$ADMIN) ))
+        if (defined($self->checkRights($options->{curSession},$ADMIN) ))
         {
             # options->{columns}->... contains the new data from the user to be set in the database
             $options->{columns}->{$options->{table}.$TSEP."admin"} = 0;

@@ -113,4 +113,41 @@ sub onClientData {
   $self->SUPER::onClientData($options);
    
 } 
+
+sub onNewEditEntry {
+    my $self = shift;
+    my $options = shift;
+    my $moreparams = shift;
+    unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{connection}) {
+       Log("Qooxdoo: onNewEditEntry: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
+       return undef;
+    }
+
+    if ($options->{table} eq 'transactions') {
+        # hide the uset_id field in the newEditEntry Window for transactions
+        # since it gets set by default
+        $options->{dohidden}->{$options->{table}}->{"user_id"}++;
+    }
+
+    if ($options->{table} eq $USERSTABLENAME ) {
+
+        if (defined(  $self->{dbm}->checkRights( $options->{curSession}, $ADMIN )  )
+           )
+        {
+            # if not admin and we are window of the user list/table
+            # don't display the checkbox for admin
+            $options->{dohidden}->{$options->{table}}->{"admin"}++;
+            # and don't display text filed for "beschreibung" sicne it's unnecessary and confusing for users in our case
+            $options->{dohidden}->{$options->{table}}->{"beschreibung"}++;
+
+        }
+        
+    }
+
+    return $self->SUPER::onNewEditEntry($options);
+    
+}
+
+
+
 1;

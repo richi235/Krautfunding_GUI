@@ -139,6 +139,8 @@ sub onNewEditEntry {
             $options->{dohidden}->{$options->{table}}->{"admin"}++;
             # and don't display text filed for "beschreibung" sicne it's unnecessary and confusing for users in our case
             $options->{dohidden}->{$options->{table}}->{"beschreibung"}++;
+            # dont display checkbox for modify rights
+            $options->{dohidden}->{$options->{table}}->{"modify"}++;
 
         }
         

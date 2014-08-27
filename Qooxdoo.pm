@@ -34,6 +34,7 @@ sub onAuthenticate {
    my $return_value = $self->SUPER::onAuthenticate($options) ;
         #tests if we are loged in
    if ( !$options->{curSession}->{"users".$TSEP."id"} ) {
+       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "reset");
        $poe_kernel->yield(sendToQX => "addbutton ".CGI::escape("")." ".CGI::escape("new_account_button")." ".CGI::escape("Neuen Benuter anlegen")." ".CGI::escape("")." ".CGI::escape("job=neweditentry,table=users"));
    }
 

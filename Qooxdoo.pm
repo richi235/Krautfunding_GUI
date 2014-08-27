@@ -5,7 +5,7 @@ use warnings;
 use ADBGUI::BasicVariables;
 use ADBGUI::Tools qw(Log);
 use POE ;
-# use Data::Dumper ; # can be used for debug output
+use Data::Dumper ; # can be used for debug output
 
 
 our @ISA;
@@ -111,7 +111,43 @@ sub onClientData {
             return ;
         }
        
-  $self->SUPER::onClientData($options);
+    
+    if(($options->{job} eq "saveedit") || ($options->{job} eq "newedit"))
+    {
+        if ($options->{table} eq "transactions")
+        {
+            my $id = $options->{$UNIQIDCOLUMNNAME} || $options->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
+            my $params = {
+               crosslink => $options->{crosslink},
+               crossid => $options->{crossid},
+               crosstable => $options->{crosstable},
+               table => $options->{table},
+               $UNIQIDCOLUMNNAME => $id,
+               oid => $options->{oid},
+               connection => $options->{connection},
+               curSession => $options->{curSession},
+               "q" => $options->{connection}->{"q"},
+               job => $options->{job},
+            };
+            $params->{columns} = $self->parseFormularData($params);
+            $params->{columns}->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})} = $id;
+
+            # set project for this transaction to current project (gotten from the filter setting)
+            $params->{columns}->{"transactions.project_id"} = $params->{curSession}->{filter}->{transactions}->{"transactions.project_id"};
+            
+            
+            # print("\e[1;31m onClient Data: Inhalt von \$params Array\n");
+            # print(Dumper($params));
+            # print("\e[0m");
+            my $returned_value = $self->onSaveEditEntry($params);
+            return $returned_value;
+            
+        }
+    }
+   
+
+
+    $self->SUPER::onClientData($options);
    
 } 
 
@@ -128,6 +164,15 @@ sub onNewEditEntry {
         # hide the uset_id field in the newEditEntry Window for transactions
         # since it gets set by default
         $options->{dohidden}->{$options->{table}}->{"user_id"}++;
+
+        # don't show the project for the funding, since it gets set automatically 
+        $options->{dohidden}->{$options->{table}}->{"project_id"}++;
+
+
+        
+        # print("\e[1;31mContent von \$options in onNewEditEntry:");
+        # print(Dumper($options));
+        # print("\e[0m");        
     }
 
     if ($options->{table} eq $USERSTABLENAME ) {
@@ -154,12 +199,3 @@ sub onNewEditEntry {
 
 
 1;
-
-        # don't show the project for the funding, since it gets set automatically 
-        $options->{dohidden}->{$options->{table}}->{"project_id"}++;
-
-
-        
-        # print("\e[1;31mContent von \$options in onNewEditEntry:");
-        # print(Dumper($options));
-        # print("\e[0m");        

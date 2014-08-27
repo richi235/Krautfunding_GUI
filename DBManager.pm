@@ -53,7 +53,16 @@ sub NewUpdateData
             $options->{columns}->{$options->{table}.$TSEP."modify"} = 0;
         }
     }
-    
+
+
+    if ( $options->{table} eq "projects" ) {
+        if ( $options->{cmd} eq "NEW" ) {
+
+            # if creating new project: autmatically set the "amount missing" to the complete cost
+            $options->{columns}->{'projects.amount_missing'} = $options->{columns}->{'projects.cost'};
+            
+        }
+    }
 
     $self->SUPER::NewUpdateData($options);
 }

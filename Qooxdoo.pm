@@ -192,6 +192,11 @@ sub onNewEditEntry {
         
     }
 
+    if ( $options->{table} eq 'projects' ) {
+        # don't display input field for "amount_missing" since this value gets set automatically
+        $options->{dohidden}->{$options->{table}}->{'amount_missing'}++;
+    }
+
     return $self->SUPER::onNewEditEntry($options);
     
 }

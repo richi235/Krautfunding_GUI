@@ -195,6 +195,9 @@ sub onNewEditEntry {
     if ( $options->{table} eq 'projects' ) {
         # don't display input field for "amount_missing" since this value gets set automatically
         $options->{dohidden}->{$options->{table}}->{'amount_missing'}++;
+        # don't display drop-down menu for "contact_person" since this gets set automatically
+        $options->{dohidden}->{$options->{table}}->{'contact_person_id'}++;
+
     }
 
     return $self->SUPER::onNewEditEntry($options);

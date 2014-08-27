@@ -154,3 +154,12 @@ sub onNewEditEntry {
 
 
 1;
+
+        # don't show the project for the funding, since it gets set automatically 
+        $options->{dohidden}->{$options->{table}}->{"project_id"}++;
+
+
+        
+        # print("\e[1;31mContent von \$options in onNewEditEntry:");
+        # print(Dumper($options));
+        # print("\e[0m");        

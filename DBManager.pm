@@ -60,7 +60,9 @@ sub NewUpdateData
 
             # if creating new project: autmatically set the "amount missing" to the complete cost
             $options->{columns}->{'projects.amount_missing'} = $options->{columns}->{'projects.cost'};
-            
+
+            # if creating new project: automatically set contact_person to current user
+            $options->{columns}->{'projects.contact_person_id'} = $options->{curSession}->{'users.id'};
         }
     }
 

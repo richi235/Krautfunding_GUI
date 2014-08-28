@@ -28,10 +28,11 @@ sub NewUpdateData
     my $moreparams = shift;
 
     # check if parameteres are correct
-    # unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{cmd} && $options->{columns} && $options->{onDone}) {
-    #    Log("DBManager: NewUpdateData: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
-    #    return &$onDone("ACCESS DENIED", $options, $self);
-    # }
+    unless (  (!$moreparams) && $options->{curSession} && $options->{table} && $options->{cmd} && $options->{columns} )
+    {
+       Log("DBManager: NewUpdateData: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
+       return undef;
+    }
 
     # make that: if user creates new transaction automatically his user id is set for the transaction
     if ($options->{table} eq "transactions" )

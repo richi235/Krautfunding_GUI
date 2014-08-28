@@ -128,12 +128,16 @@ sub checkRights {
        
    }
 
+             # check if the passed session is a active session                # check if $ACTICESESSION Bit is set         # table to do things on
    if ( !defined( $self->SUPER::checkRights( $session,$ACTIVESESSION )) &&  ($rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'projects' )  ) {
        return undef ;
    }
    
+   if ( !defined( $self->SUPER::checkRights( $session,$ACTIVESESSION )) &&  ($rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'transactions' )  ) {
+       return undef ;
+   }
+
    return $self->SUPER::checkRights( $session,$rights,$table,$id ) ;
-   
 }   
 
 

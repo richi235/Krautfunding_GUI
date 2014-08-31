@@ -103,8 +103,6 @@ sub deleteUndeleteDataset {
         
     }
 
-    # print (Dumper($options));
-    # die ;
     
     if (uc($options->{cmd}) eq "UNDEL") {
        $ok = $db->undeleteDataSet($options);

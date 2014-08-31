@@ -71,73 +71,78 @@ sub NewUpdateData
 }
 
 
-sub deleteUndeleteDataset {
-    my $self = shift;
-    my $options = shift;
-    my $db = $self->getDBBackend($options->{table});
-    my $ok = undef;
-
-    if ( $options->{table} eq "projects") {
-
-        # get the id of the contact person of the project to be deleted:
-
-          # get the whole row from the table
-        my $result_set = $db->getDataSet({
-            table => $options->{table},
-            session => $options->{session},
-            id => $options->{id}
-        }) ;
-           # extract the contact_person_id
-        my $contact_person_id_of_project ;
-            # only work with result set if we got correct data
-         if ( ref($result_set) eq "ARRAY" ) {
-             $contact_person_id_of_project = $result_set->[0]->[0]->{$options->{table}.$TSEP.'contact_person_id'};
-         } else {
-              log("Wanted to get project name from id, got no or corrupted data");
-         }
-
-        # test if it's the user who wants to delete
-        if ( $options->{session}->{"users.id"} != $contact_person_id_of_project ){
-            return 0 ; # do nothing
-        }
-        
-    }
-
-    
-    if (uc($options->{cmd}) eq "UNDEL") {
-       $ok = $db->undeleteDataSet($options);
-    } else {
-       $ok = $db->deleteDataSet($options);
-    }
-    return $ok ? 0 : "(un)deleteDataSet reported error";
-}
-
-
 
 sub checkRights {
-   my $self = shift;
-   my $session = shift;
-   my $rights  = shift;
-   my $table   = shift || undef;
-   my $id      = shift || undef;
-   
-   # this enables clients to create new users without beeing logged in
-   if (($rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'users' ) && !$id ) {
-       return undef ;
-       
-   }
+    my $self    = shift;
+    my $session = shift;
+    my $rights  = shift;            # what we are asked for, if it's allowed
+    my $table   = shift || undef;
+    my $id      = shift || undef;
 
-             # check if the passed session is a active session                # check if $ACTICESESSION Bit is set         # table to do things on
-   if ( !defined( $self->SUPER::checkRights( $session,$ACTIVESESSION )) &&  ($rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'projects' )  ) {
-       return undef ; # this allows users accessing the 'projects' table without needing the almost all empowering $MODIFY right
-   }
-   
-   if ( !defined( $self->SUPER::checkRights( $session,$ACTIVESESSION )) &&  ($rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'transactions' )  ) {
-       return undef ; # this allows users accesing the 'transactions' table without needing the almost all empowering $MODIFY right
-   }
+    # this enables clients to create new users without beeing logged in
+    if (   ( $rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'users' ) && !$id )
+    {
+        return undef;
+    }
 
-   return $self->SUPER::checkRights( $session,$rights,$table,$id ) ;
-}   
+    # if we are asked for the modify right on table projects in an active session
+    # this happens if user wants to add new project or change a existing one
+    if (   ( $table eq 'projects' )
+        && ( $rights &  $MODIFY  )
+        && !defined( $self->SUPER::checkRights( $session, $ACTIVESESSION ) )  )
+    {
+
+        # when there's no defined id we're not working on a existing object but creating a new one
+        # this shall be allowed for every user, therefore returning undef
+        if ( !defined($id) ) {
+            return undef ;
+        } else {
+            # Now we are editing an existing project
+            # the following lines make sure, the user can only edit his own projects, none of other people
+            
+            my $db = $self->getDBBackend( $table );
+
+            # get the id of the contact person of the project from the database
+            my $result_set = $db->getDataSet(
+                {
+                    table   => $table,
+                    session => $session,
+                    id      => $id
+                }
+            );
+
+            my $contact_person_id_of_project;
+            # only extract from result set if we got correct data
+            if ( ref($result_set) eq "ARRAY" ) {
+                $contact_person_id_of_project = $result_set->[0]->[0] ->{ $table . $TSEP . 'contact_person_id' };
+            }
+            else {
+                log("Wanted to get project name from id, got no or corrupted data");
+            }
+
+            # here we check if the user id of the project (gotten from the database) is the one of the current user
+            # if not return an error
+            if ($session->{"users.id"} != $contact_person_id_of_project )
+            {
+                return ["Forbidden: User tried to edit or delete Project of other User", $WARNING];
+            } else
+            {    
+                return undef;   # all checks passed, therefore return undef 
+            }
+
+        }
+
+    }
+
+    if (   ( $table eq 'transactions' )
+        && ( $rights & ( $ACTIVESESSION | $MODIFY ) )
+        && !defined( $self->SUPER::checkRights( $session, $ACTIVESESSION ) ) )
+    {
+        return undef ; 
+    }
+
+    return $self->SUPER::checkRights( $session, $rights, $table, $id );
+}
 
 
 1;

@@ -120,7 +120,8 @@ sub checkRights {
    my $rights  = shift;
    my $table   = shift || undef;
    my $id      = shift || undef;
-
+   
+   # this enables clients to create new users without beeing logged in
    if (($rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'users' ) && !$id ) {
        return undef ;
        
@@ -128,11 +129,11 @@ sub checkRights {
 
              # check if the passed session is a active session                # check if $ACTICESESSION Bit is set         # table to do things on
    if ( !defined( $self->SUPER::checkRights( $session,$ACTIVESESSION )) &&  ($rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'projects' )  ) {
-       return undef ;
+       return undef ; # this allows users accessing the 'projects' table without needing the almost all empowering $MODIFY right
    }
    
    if ( !defined( $self->SUPER::checkRights( $session,$ACTIVESESSION )) &&  ($rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'transactions' )  ) {
-       return undef ;
+       return undef ; # this allows users accesing the 'transactions' table without needing the almost all empowering $MODIFY right
    }
 
    return $self->SUPER::checkRights( $session,$rights,$table,$id ) ;

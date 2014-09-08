@@ -56,7 +56,8 @@ sub NewUpdateData
     }
 
 
-    if ( $options->{table} eq "projects" ) {
+    if ( $options->{table} eq "projects" )
+    {
         if ( $options->{cmd} eq "NEW" ) {
 
             # if creating new project: autmatically set the "amount missing" to the complete cost
@@ -64,6 +65,39 @@ sub NewUpdateData
 
             # if creating new project: automatically set contact_person to current user
             $options->{columns}->{'projects.contact_person_id'} = $options->{curSession}->{'users.id'};
+        }
+
+        if ( $options->{cmd} eq "UPDATE" ) # a attribute of an existing project is changed
+        {
+            # fetch the old value of "cost" from the Database:
+                my $db = $self->getDBBackend( $options->{table} );
+                my $result_set = $db->getDataSet(
+                    {
+                        table   => $options->{table},
+                        session => $options->{curSession},
+                        id      => $options->{id}
+                    }
+                );
+
+                my $old_project_cost ;
+                # only extract from result set if we got correct data
+                if ( ref($result_set) eq "ARRAY" ) {
+                    $old_project_cost = $result_set->[0]->[0] ->{ $options->{table} . $TSEP . 'cost' };
+                }
+                else {
+                    log("Wanted to get project name from id, got no or corrupted data");
+                }
+            # done fetching old value of "cost"
+
+            
+            my $new_price = $options->{columns}->{'projects.cost'}; # new price we get from user request 
+
+            if ( $old_project_cost != $new_price ) # if project cost has been changed
+            {
+                my $price_increasing_amount = $new_price - $old_project_cost ; # can also be a negative value, calculations will still be correct
+                $options->{columns}->{'projects.amount_missing'} += $price_increasing_amount ;    
+            }
+            
         }
     }
 

@@ -113,106 +113,112 @@ sub checkRights {
     my $table   = shift || undef;
     my $id      = shift || undef;
 
-    # this enables clients to create new users without beeing logged in
-    if (   ( $rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'users' ) && !$id )
-    {
-        return undef;
-    }
+    if ( defined ($table) ) #all the following tests are table specific                 
+    {                       # only test, if we are asked table speciic things and therefore a table is defined in the checkRights Request       
 
-    # if we are asked for the modify right on table projects in an active session
-    # this happens if user wants to add new project or change a existing one
-    if (   ( $table eq 'projects' )
-        && ( $rights &  $MODIFY  )
-        && !defined( $self->SUPER::checkRights( $session, $ACTIVESESSION ) )  )
-    {
+        # this enables clients to create new users without beeing logged in
+        if (   ( $rights & ( $ACTIVESESSION | $MODIFY ) ) && ( $table eq 'users' ) && !$id )
+        {
+            return undef;
+        }
 
-        # when there's no defined id we're not working on a existing object but creating a new one
-        # this shall be allowed for every user, therefore returning undef
-        if ( !defined($id) ) {
-            return undef ;
-        } else {
-            # Now we are editing an existing project
-            # the following lines make sure, the user can only edit his own projects, none of other people
-            
-            my $db = $self->getDBBackend( $table );
+        # if we are asked for the modify right on table projects in an active session
+        # this happens if user wants to add new project or change a existing one
+        if (   ( $table eq 'projects' )
+            && ( $rights &  $MODIFY  )
+            && !defined( $self->SUPER::checkRights( $session, $ACTIVESESSION ) )  )
+        {
 
-            # get the id of the contact person of the project from the database
-            my $result_set = $db->getDataSet(
-                {
-                    table   => $table,
-                    session => $session,
-                    id      => $id
+            # when there's no defined id we're not working on a existing object but creating a new one
+            # this shall be allowed for every user, therefore returning undef
+            if ( !defined($id) ) {
+                return undef ;
+            } else {
+                # Now we are editing an existing project
+                # the following lines make sure, the user can only edit his own projects, none of other people
+
+                my $db = $self->getDBBackend( $table );
+
+                # get the id of the contact person of the project from the database
+                my $result_set = $db->getDataSet(
+                    {
+                        table   => $table,
+                        session => $session,
+                        id      => $id
+                    }
+                );
+
+                my $contact_person_id_of_project;
+                # only extract from result set if we got correct data
+                if ( ref($result_set) eq "ARRAY" ) {
+                    $contact_person_id_of_project = $result_set->[0]->[0] ->{ $table . $TSEP . 'contact_person_id' };
                 }
-            );
+                else {
+                    log("Wanted to get project name from id, got no or corrupted data");
+                }
 
-            my $contact_person_id_of_project;
-            # only extract from result set if we got correct data
-            if ( ref($result_set) eq "ARRAY" ) {
-                $contact_person_id_of_project = $result_set->[0]->[0] ->{ $table . $TSEP . 'contact_person_id' };
-            }
-            else {
-                log("Wanted to get project name from id, got no or corrupted data");
-            }
+                # here we check if the user id of the project (gotten from the database) is the one of the current user
+                # if not return an error
+                if ($session->{"users.id"} != $contact_person_id_of_project )
+                {
+                    return ["Forbidden: User tried to edit or delete Project of other User", $WARNING];
+                } else
+                {    
+                    return undef;   # all checks passed, therefore return undef 
+                }
 
-            # here we check if the user id of the project (gotten from the database) is the one of the current user
-            # if not return an error
-            if ($session->{"users.id"} != $contact_person_id_of_project )
-            {
-                return ["Forbidden: User tried to edit or delete Project of other User", $WARNING];
-            } else
-            {    
-                return undef;   # all checks passed, therefore return undef 
             }
 
         }
 
-    }
+        if (   ( $table eq 'transactions' )
+            && ( $rights &  $MODIFY  )
+            && !defined( $self->SUPER::checkRights( $session, $ACTIVESESSION ) ) )
+        {
+            # when there's no defined id we're not working on a existing object but creating a new one
+            # this shall be allowed for every user, therefore returning undef
+            if ( !defined($id) ) {
+                return undef ;
+            } else {
+                # Now we are editing an existing project
+                # the following lines make sure, the user can only edit his own projects, none of other people
 
-    if (   ( $table eq 'transactions' )
-        && ( $rights &  $MODIFY  )
-        && !defined( $self->SUPER::checkRights( $session, $ACTIVESESSION ) ) )
-    {
-        # when there's no defined id we're not working on a existing object but creating a new one
-        # this shall be allowed for every user, therefore returning undef
-        if ( !defined($id) ) {
-            return undef ;
-        } else {
-            # Now we are editing an existing project
-            # the following lines make sure, the user can only edit his own projects, none of other people
-            
-            my $db = $self->getDBBackend( $table );
+                my $db = $self->getDBBackend( $table );
 
-         # the next ~10 lines get the id of the funder from the database
-            my $result_set = $db->getDataSet(
-                {
-                    table   => $table,
-                    session => $session,
-                    id      => $id
+             # the next ~10 lines get the id of the funder from the database
+                my $result_set = $db->getDataSet(
+                    {
+                        table   => $table,
+                        session => $session,
+                        id      => $id
+                    }
+                );
+
+                my $user_id_of_funder;
+                # only extract from result set if we got correct data
+                if ( ref($result_set) eq "ARRAY" ) {
+                    $user_id_of_funder = $result_set->[0]->[0] ->{ $table . $TSEP . 'user_id' };
                 }
-            );
+                else {
+                    log("Wanted to get project name from id, got no or corrupted data");
+                }
 
-            my $user_id_of_funder;
-            # only extract from result set if we got correct data
-            if ( ref($result_set) eq "ARRAY" ) {
-                $user_id_of_funder = $result_set->[0]->[0] ->{ $table . $TSEP . 'user_id' };
-            }
-            else {
-                log("Wanted to get project name from id, got no or corrupted data");
-            }
+                # here we check if the user id of the funder (gotten from the database) is the one of the current user
+                # if not return an error
+                if ($session->{"users.id"} != $user_id_of_funder )
+                {
+                    return ["Forbidden: User tried to edit or delete funding of other User", $WARNING];
+                } else
+                {    
+                    return undef;   # all checks passed, therefore return undef 
+                }
 
-            # here we check if the user id of the funder (gotten from the database) is the one of the current user
-            # if not return an error
-            if ($session->{"users.id"} != $user_id_of_funder )
-            {
-                return ["Forbidden: User tried to edit or delete funding of other User", $WARNING];
-            } else
-            {    
-                return undef;   # all checks passed, therefore return undef 
             }
 
         }
-
+        
     }
+    
 
     return $self->SUPER::checkRights( $session, $rights, $table, $id );
 }

@@ -204,6 +204,95 @@ sub onNewEditEntry {
     
 }
 
+sub getTableButtonsDef {
+   my $self = shift;
+   my $options = shift;
+   my $moreparams = shift;
+   
+   unless ((!$moreparams) && $options->{table} && $options->{curSession}) {
+      Log("onHTMLPreview: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
+      return undef;
+   }
 
+   my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
+
+   if ( $options->{table} eq "projects" )
+   {
+       if ($self->{dbm}->{config}->{nojson})
+       {
+          if ($curtabledef->{readonly} || $options->{nobuttons}) {
+             return ["","","",""];
+          }
+          return [CGI::escape("Neues Projekt").",".CGI::escape("Bearbeiten").",".CGI::escape("Löschen").",".CGI::escape("Filter"),
+                  CGI::escape("resource/qx/icon/Tango/32/actions/list-add.png").",".CGI::escape("/bilder/edit.png").",".CGI::escape("resource/qx/icon/Tango/32/actions/list-remove.png").",".CGI::escape("resource/qx/icon/Tango/32/actions/system-search.png"),
+                  CGI::escape("neweditentry").",".CGI::escape("neweditentry").",".CGI::escape("delrow").",".CGI::escape("filter"),
+                  CGI::escape("table").",".CGI::escape("row").",".CGI::escape("row").",".CGI::escape("table")];
+       }
+
+       my $return = [];
+                        # here comes a hash of hash references
+       push( @$return, ({
+                name => "new",
+                label => "Neues_Projekt",
+                image => "resource/qx/icon/Tango/".($options->{smallbuttons} ? "16" : "32")."/actions/list-add.png",
+                action => "neweditentry",
+                bindto => "table",
+           }, {
+                name => "edit",
+                label => "Bearbeiten",
+                image => ($options->{smallbuttons} ? "" : "/bilder/edit.png"),
+                action => "neweditentry",
+                bindto => "row",
+           }, {
+                name => "del",
+                label => "Loeschen",
+                image => "resource/qx/icon/Tango/".($options->{smallbuttons} ? "16" : "32")."/actions/list-remove.png",
+                action => "delrow",
+                bindto => "row",
+       })) unless ($curtabledef->{readonly} || $options->{nobuttons} || $options->{readonly});
+
+       return ["JSON", $return];
+   } elsif ( $options->{table} eq "transactions" )
+   {
+       if ($self->{dbm}->{config}->{nojson})
+       {
+          if ($curtabledef->{readonly} || $options->{nobuttons}) {
+             return ["","","",""];
+          }
+          return [CGI::escape("Beteiligen").",".CGI::escape("Beteiligung bearbeiten").",".CGI::escape("Löschen").",".CGI::escape("Filter"),
+                  CGI::escape("resource/qx/icon/Tango/32/actions/list-add.png").",".CGI::escape("/bilder/edit.png").",".CGI::escape("resource/qx/icon/Tango/32/actions/list-remove.png").",".CGI::escape("resource/qx/icon/Tango/32/actions/system-search.png"),
+                  CGI::escape("neweditentry").",".CGI::escape("neweditentry").",".CGI::escape("delrow").",".CGI::escape("filter"),
+                  CGI::escape("table").",".CGI::escape("row").",".CGI::escape("row").",".CGI::escape("table")];
+       }
+
+       my $return = [];
+                        # here comes a hash of hash references
+       push( @$return, ({
+                name => "new",
+                label => "Beteiligen",
+                image => "resource/qx/icon/Tango/".($options->{smallbuttons} ? "16" : "32")."/actions/list-add.png",
+                action => "neweditentry",
+                bindto => "table",
+           }, {
+                name => "edit",
+                label => "Beteiligung_bearbeiten",
+                image => ($options->{smallbuttons} ? "" : "/bilder/edit.png"),
+                action => "neweditentry",
+                bindto => "row",
+           }, {
+                name => "del",
+                label => "Loeschen",
+                image => "resource/qx/icon/Tango/".($options->{smallbuttons} ? "16" : "32")."/actions/list-remove.png",
+                action => "delrow",
+                bindto => "row",
+       })) unless ($curtabledef->{readonly} || $options->{nobuttons} || $options->{readonly});
+
+       return ["JSON", $return];
+   } else
+   {
+       return $self->SUPER::getTableButtonsDef($options,$moreparams);
+   }
+
+}
 
 1;

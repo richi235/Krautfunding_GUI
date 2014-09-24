@@ -107,7 +107,7 @@ sub onClientData {
             
 
             # display the window with the correct title
-            $self->onShow({table => "transactions", curSession => $options->{curSession} , connection => $options->{connection} , windowtitle => "Spenden fuer: $project_name"  });
+            $self->onShow({table => "transactions", curSession => $options->{curSession} , connection => $options->{connection} , windowtitle => "Beteiligungen an: $project_name"  });
             return ;
         }
        

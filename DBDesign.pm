@@ -29,11 +29,17 @@ sub getDB {
    my $self = shift;
    my $DB = $self->SUPER::getDB() || {};
 
-   $DB->{tables}->{"projects"} = {
+   $DB->{tables}->{"projects"} =
+   {
+      rights => $RIGHTS,
+      dbuser => $DBUSER,
+      primarykey => ["id"],
+
       dblclick => "doubleclick_on_projects",
       label => "Projekte",
       order => 1,
       idcolumnname => "id",
+
       columns => {
          "id" => {
             type => $UNIQIDCOLUMNNAME,
@@ -66,46 +72,17 @@ sub getDB {
          },
       }
    };
-   $DB->{tables}->{"users"} =
+   $DB->{tables}->{"transactions"} =
    {
-      idcolumnname => "id",
-      columns =>
-      {
-         "id" => {
-            type => $UNIQIDCOLUMNNAME,
-         },
-         "username" => {
-            showInSelect => 1,
-            type => "text",
-            order => 1,
-         },
-         "beschreibung" => {
-            type => "text",
-            order => 2,
-         },
-         "modify" => {
-            type => "boolean",
-            order => 3,
-         },
-         "password" => {
-            type => "text",
-            order => 4,
-         },
-         "admin" => {
-            type => "boolean",
-            order => 5,
-         },
-         "deleted" => {
-            type => $DELETEDCOLUMNNAME,
-            order => 6,
-         },
-      }
-   };
-   $DB->{tables}->{"transactions"} = {
+      rights => $RIGHTS,
+      dbuser => $DBUSER,
+      primarykey => ["id"],
+
       label => "Spenden", 
       order => 2,
       realdelete => 1,
       idcolumnname => "id",
+
       columns => {
          "id" => {
             type => $UNIQIDCOLUMNNAME,
@@ -129,32 +106,6 @@ sub getDB {
             showInSelect => 1,
             type => "double",
             order => 3,
-         },
-      }
-   };
-   $DB->{tables}->{"log"} = {
-      idcolumnname => "id",
-      columns => {
-         "id" => {
-            type => $UNIQIDCOLUMNNAME,
-         },
-         "username" => {
-            type => "text",
-         },
-         "entry" => {
-            type => "text",
-         },
-         "diff" => {
-            type => "longtext",
-         },
-         "mydate" => {
-            type => "date",
-         },
-         "mytable" => {
-            type => "text",
-         },
-         "type" => {
-            type => "text",
          },
       }
    };

@@ -5,6 +5,7 @@ use warnings;
 use ADBGUI::BasicVariables;
 use ADBGUI::Tools qw(Log);
 use POE ;
+use CGI;
 use Data::Dumper ; # can be used for debug output
 
 
@@ -203,6 +204,128 @@ sub onNewEditEntry {
     return $self->SUPER::onNewEditEntry($options);
     
 }
+
+
+
+sub onShow
+{
+    my $self = shift;
+    my $options = shift;
+    my $moreparams = shift;
+
+    unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{connection}) {
+       Log("onShow: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.":connection:".$options->{connection}.": !", $ERROR);
+       return undef;
+    }
+
+    # call the corresponding framework function
+    my $return_value = $self->SUPER::onShow( $options, $moreparams );
+
+    if ( $options->{table} eq "transactions" ) {
+       ### The following creates the iframe for displaying the amount missing ###
+
+        # qooxdoo object identifier of the window
+        my $window_identifier = $options->{table}."_"."show";
+        # the identifier of the comming footer object in qooxdoo
+        my $footer_identifier = $window_identifier."_data_"."amount_missing";
+        
+        # create an new iframe object on the client
+        $poe_kernel->yield(sendToQX => "createiframe " . $footer_identifier . " ".CGI::escape("about:blank"));
+        # add it to the qooxdoo window
+        $poe_kernel->yield(sendToQX => "addobject " . $window_identifier." " . $footer_identifier);
+
+        # get the id of the current displayed project
+        # needed to get the correct amount_missing
+        my $current_filter = $self->{dbm}->getFilter($options, $moreparams);
+        my $id_of_current_project = $current_filter->{"transactions".$TSEP."project_id"};
+        if ( !($id_of_current_project) ) {
+            Log("Project ID for amount missing in footer not found", $WARNING);
+            return undef;
+        }
+
+        # draw the correct value into the new iframe:
+        $self->update_amount_missing_footer( $options->{"curSession"}, $id_of_current_project );
+    }
+
+    return $return_value;
+}
+
+sub update_amount_missing_footer
+{
+    my $self = shift;
+    my $session = shift;
+    my $project_id = shift;
+    my $called_by_save_edit = shift;
+    
+    my $footer_identifier = "transactions_show_data_amount_missing";
+    
+
+  ### the following fetches the amount missing from the database ###
+    my $amount_missing ;
+    
+    my $db  =  $self->{dbm}->getDBBackend("transactions");
+    my $result_set = $db->getDataSet({
+        table => "projects",
+        session => $session,
+        id => $project_id
+    }) ;
+
+       # only work with result set if we got correct data
+    if ( ref($result_set) eq "ARRAY" ) {
+        $amount_missing = $result_set->[0]->[0]->{"projects".$TSEP.'amount_missing'};
+    } else {
+         log("Wanted to get project name from id, got no or corrupted data");
+    }
+  ### done ###
+
+    # the footer for the project window
+    # a html iframe is needed to set the right bound values in nice formatting in the qooxdoo framework
+    my $footer_html =
+              "<table width=100%><tr><td>Fehlender Betrag: </td><td align=right> <b><font color=red>$amount_missing &euro; </font></b> </td></tr></table>" ; 
+
+    # only wipe the iframe if we are called by onSaveEditEntry()
+    # This is weird but actually needed
+    # if it gets called always, the value is not drawn when called from onShow()
+    if ( $called_by_save_edit )
+    {
+        $poe_kernel->yield(sendToQX => "iframewriteclose " . $footer_identifier );
+    }
+    # now, write the data into the iframe
+    $poe_kernel->yield(sendToQX => "iframewritereset " . $footer_identifier . " " . CGI::escape( $footer_html ));
+}    
+
+sub onSaveEditEntry
+{
+   my $self = shift;
+   my $options = shift;
+   my $moreparams = shift;
+
+   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{"q"} && $options->{oid} && $options->{connection}) {
+      Log("onSaveEditEntry: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
+      return undef;
+   }
+
+   # enable autoclosing of the window when save button is preesed
+   $options->{close}++;
+
+   my $return_value = $self->SUPER::onSaveEditEntry($options, $moreparams );
+
+   if ( $options->{table} eq 'transactions')
+   {
+       # get the id of the current showed project from the filter
+       my $current_filter = $self->{dbm}->getFilter($options, $moreparams);
+       my $id_of_current_project = $current_filter->{"transactions".$TSEP."project_id"};
+       if ( !($id_of_current_project) ) {
+           Log("Project ID for amount missing in footer not found", $WARNING);
+           return undef;
+       }
+
+       $self->update_amount_missing_footer( $options->{"curSession"}, $id_of_current_project, 1 );
+   }
+
+   return $return_value;
+}   
+
 
 sub getTableButtonsDef {
    my $self = shift;

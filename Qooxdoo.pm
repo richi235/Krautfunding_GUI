@@ -152,6 +152,41 @@ sub onClientData {
    
 } 
 
+sub onDelRow
+{
+    my $self = shift;
+    my $options = shift;
+    my $moreparams = shift;
+
+    unless ((!$moreparams) && $options->{table} && $options->{curSession}) {
+       Log("onDelRow: Missing parameters: connection:".$options->{table}.": !", $ERROR);
+       return undef;
+    }
+
+    my $return_value = $self->SUPER::onDelRow($options,$moreparams);
+
+
+    if ( $options->{table} eq 'transactions' )
+    {
+        ### The following updates the amount_missing value in the footer ###  
+          # get the id of the current displayed project
+          # needed to get the correct amount_missing
+          my $current_filter = $self->{dbm}->getFilter($options, $moreparams);
+          my $id_of_current_project = $current_filter->{"transactions".$TSEP."project_id"};
+          if ( !($id_of_current_project) ) {
+              Log("Project ID for amount missing in footer not found", $WARNING);
+              return undef;
+          }
+
+          # draw the correct value into the new iframe:
+          $self->update_amount_missing_footer( $options->{"curSession"}, $id_of_current_project, 1 );
+        
+    }
+    
+    return $return_value;
+}
+
+
 sub onNewEditEntry {
     my $self = shift;
     my $options = shift;

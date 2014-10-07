@@ -290,7 +290,7 @@ sub update_amount_missing_footer
     my $self = shift;
     my $session = shift;
     my $project_id = shift;
-    my $called_by_save_edit = shift;
+    my $called_by_save_edit_or_by_delete = shift;
     
     my $footer_identifier = "transactions_show_data_amount_missing";
     
@@ -321,7 +321,7 @@ sub update_amount_missing_footer
     # only wipe the iframe if we are called by onSaveEditEntry()
     # This is weird but actually needed
     # if it gets called always, the value is not drawn when called from onShow()
-    if ( $called_by_save_edit )
+    if ( $called_by_save_edit_or_by_delete )
     {
         $poe_kernel->yield(sendToQX => "iframewriteclose " . $footer_identifier );
     }

@@ -13,7 +13,12 @@ sub new {
    @ISA = ($parent) if $parent;
    $self = $self ? $self : {};
    bless ($self, $class);
+
+   $self->{qx}->{new_project} = "Neues_Projekt";
+
+
    return $self;
+   
 }
 
 1;

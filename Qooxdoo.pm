@@ -11,14 +11,19 @@ use Data::Dumper ; # can be used for debug output
 
 our @ISA;
 
-sub new {
+sub new
+{
     my $proto  = shift;
     my $class  = ref($proto) || $proto;
     my $self   = shift;
     my $parent = $self ? ref($self) : "";
+
     @ISA = ($parent) if $parent;
     $self = $self ? $self : {};
     bless( $self, $class );
+
+    $self->{text} = $self->{gui}->{text};
+
     return $self;
 }
 
@@ -381,7 +386,7 @@ sub getTableButtonsDef {
           if ($curtabledef->{readonly} || $options->{nobuttons}) {
              return ["","","",""];
           }
-          return [CGI::escape("Neues Projekt").",".CGI::escape("Bearbeiten").",".CGI::escape("Löschen").",".CGI::escape("Filter"),
+          return [CGI::escape( $self->{text}->{qx}->{new_project} ).",".CGI::escape("Bearbeiten").",".CGI::escape("Löschen").",".CGI::escape("Filter"),
                   CGI::escape("resource/qx/icon/Tango/32/actions/list-add.png").",".CGI::escape("/bilder/edit.png").",".CGI::escape("resource/qx/icon/Tango/32/actions/list-remove.png").",".CGI::escape("resource/qx/icon/Tango/32/actions/system-search.png"),
                   CGI::escape("neweditentry").",".CGI::escape("neweditentry").",".CGI::escape("delrow").",".CGI::escape("filter"),
                   CGI::escape("table").",".CGI::escape("row").",".CGI::escape("row").",".CGI::escape("table")];
@@ -391,7 +396,7 @@ sub getTableButtonsDef {
                         # here comes a hash of hash references
        push( @$return, ({
                 name => "new",
-                label => "Neues_Projekt",
+                label => $self->{text}->{qx}->{new_project} ,
                 image => "resource/qx/icon/Tango/".($options->{smallbuttons} ? "16" : "32")."/actions/list-add.png",
                 action => "neweditentry",
                 bindto => "table",

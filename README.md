@@ -11,3 +11,7 @@ In Krautfunding GUI every User can easily add Projects, with costs and Descripti
 Now everyone else of the group can inscribe his fundings.   
 Krautfunding GUI enables you to inscribe and track all this data via web Browser,    
 and calculates the missing amounts.   
+
+## Install
+```git clone git@git.priv.de:rich235/krautfunding_gui.git Krautfunding_GUI```
+

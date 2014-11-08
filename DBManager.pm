@@ -24,9 +24,9 @@ sub updateProjectVal {
     my $projid  = shift;
     my $options = shift;
 
-    my $db      = $self->getDBBackend( $options->{table} );
-    my $ret     = undef;
-    my $where   = $self->Where_Pre(
+    my $db            = $self->getDBBackend( $options->{table} );
+    my $db_result_set = undef;
+    my $where         = $self->Where_Pre(
         {
             table      => $options->{table},
             curSession => $options->{curSession},
@@ -35,40 +35,43 @@ sub updateProjectVal {
     push( @$where,
         "(" . $options->{table} . $TSEP . "project_id = '" . $projid . "')" );
 
-    if (defined($ret = $db->getDataSet(
+    # fetch all transactions for this projects from the database
+    my $db_result_set = $db->getDataSet(
                 {
                     table    => $options->{table},
                     simple   => 1,
                     wherePre => $where,
                     session  => $options->{curSession},
                 })
-        )
-        && ( ref($ret) eq "ARRAY" )
-        && ( scalar( @{ $ret->[0] } ) )
+
+    # only process transactions, if we got valid data:    
+    if (defined($db_result_set)
+        && ( ref($db_result_set) eq "ARRAY" )
+        && ( scalar( @{ $db_result_set->[0] } ) )
       )
     {
-        my $val = 0;
-        foreach my $curline ( @{ $ret->[0] } )
+        my $sum_of_fundings = 0;
+        foreach my $curline ( @{ $db_result_set->[0] } )
         {
-            my $curval = $curline->{ $options->{table} . $TSEP . "value" };
-            $curval =~ s/\,/\./g;
+            my $funding = $curline->{ $options->{table} . $TSEP . "value" };
+            $funding =~ s/\,/\./g;
 
-            unless ( $curval =~ m,^\d+(\.\d+)?$, )
+            unless ( $funding =~ m,^\d+(\.\d+)?$, )
             {
                 my $err = "Invalid number "
-                  . $curval
+                  . $funding
                   . " in transation with id "
                   . $curline->{ $options->{table} . $TSEP . $UNIQIDCOLUMNNAME };
                 Log( $err, $ERROR );
                 return $err;
             }
 
-            $val += $curval;
+            $sum_of_fundings += $funding;
         }
 
-        my $costs = undef;
+        my $project_cost = undef;
 
-        if (defined($ret = $db->getDataSet(
+        if (defined($db_result_set = $db->getDataSet(
                     {
                         table   => "projects",
                         simple  => 1,
@@ -76,18 +79,18 @@ sub updateProjectVal {
                         session => $options->{curSession},
                     })
             )
-            && ( ref($ret) eq "ARRAY" )
-            && ( scalar( @{ $ret->[0] } ) == 1 )
+            && ( ref($db_result_set) eq "ARRAY" )
+            && ( scalar( @{ $db_result_set->[0] } ) == 1 )
           )
         {
-            $costs = $ret->[0]->[0]->{ "projects" . $TSEP . "cost" };
-            $costs =~ s/\,/\./g;
+            $project_cost = $db_result_set->[0]->[0]->{ "projects" . $TSEP . "cost" };
+            $project_cost =~ s/\,/\./g;
 
-            unless ( $costs =~ m,^\d+(\.\d+)?$, )
+            unless ( $project_cost =~ m,^\d+(\.\d+)?$, )
             {
                 my $err =
                     "Invalid costs '"
-                  . $costs
+                  . $project_cost
                   . "' format for project with id "
                   . $projid;
                 Log( $err, $ERROR );
@@ -101,14 +104,14 @@ sub updateProjectVal {
             return $err;
         }
 
-        print "VAL:" . ( $costs - $val ) . "\n";
+        print "VAL:" . ( $project_cost - $sum_of_fundings ) . "\n";
 
         my $ret2 = $db->updateDataSet(
             {
                 table => "projects",
                 id    => $projid,
                 columns =>
-                  { "projects" . $TSEP . "amount_missing" => $costs - $val, },
+                  { "projects" . $TSEP . "amount_missing" => $project_cost - $sum_of_fundings, },
                 session => $options->{curSession},
             });
     }

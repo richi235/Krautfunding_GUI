@@ -23,7 +23,7 @@ sub new
 sub update_amount_missing
 {
     my $self    = shift;
-    my $projid  = shift;
+    my $project_id  = shift;
     my $options = shift;
 
     ### What this function does: ###
@@ -47,7 +47,7 @@ sub update_amount_missing
         });
     
     push( @$where,
-        "(" . $options->{table} . $TSEP . "project_id = '" . $projid . "')" );
+        "(" . $options->{table} . $TSEP . "project_id = '" . $project_id . "')" );
 
     # fetch all transactions for this projects from the database
     $db_result_set = $db->getDataSet(
@@ -97,7 +97,7 @@ sub update_amount_missing
             {
                 table   => "projects",
                 simple  => 1,
-                id      => $projid,
+                id      => $project_id,
                 session => $options->{curSession},
             });
 
@@ -118,14 +118,14 @@ sub update_amount_missing
                     "Invalid costs '"
                   . $project_cost
                   . "' format for project with id "
-                  . $projid;
+                  . $project_id;
                 Log( $err, $ERROR );
                 return $err;
             }
         }
         else
         {    
-            my $err = "No costs format for project with id " . $projid;
+            my $err = "No costs format for project with id " . $project_id;
             Log( $err, $ERROR );
             return $err;
         }
@@ -134,7 +134,7 @@ sub update_amount_missing
         $db->updateDataSet(
             {
                 table   => "projects",
-                id      => $projid,
+                id      => $project_id,
                 columns =>
                 {
                         "projects"
@@ -147,7 +147,7 @@ sub update_amount_missing
     }
     else
     {    
-        my $err = "Writing new amount missing failed. No project id in transaction!";
+        my $err = "Updating amount missing failed. No project id for transaction!";
         Log( $err, $ERROR );
         return $err;
     }

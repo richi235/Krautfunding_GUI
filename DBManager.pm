@@ -170,15 +170,16 @@ sub NewUpdateData {
         return undef;
     }
 
-# make that: if user creates new transaction automatically his user id is set for the transaction
+    # make that: if user creates new transaction automatically his user id is set for the transaction
     if ( $options->{table} eq "transactions" )
-    {    #checkRights returns a undefined, if user and session match and an defined value otherwise
+    {
+        #checkRights returns a undefined, if user and session match and an defined value otherwise
         if ( defined( $self->checkRights( $options->{curSession}, $ADMIN ) ) )
         {
             $options->{columns}->{ $options->{table} . $TSEP . "user_id" } =
-              $options->{curSession}
-              ->{ $USERSTABLENAME . $TSEP . $UNIQIDCOLUMNNAME };
+                $options->{curSession} ->{ $USERSTABLENAME . $TSEP . $UNIQIDCOLUMNNAME };
         }
+
         if ( $options->{columns}->{ $options->{table} . $TSEP . "project_id" } )
         {
             my $ret = $self->SUPER::NewUpdateData($options);

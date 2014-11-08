@@ -228,7 +228,8 @@ sub NewUpdateData {
             # if creating new project: automatically set contact_person to current user
             $options->{columns}->{'projects.contact_person_id'} =
               $options->{curSession}->{'users.id'};
-        } elsif ( $options->{cmd} eq "UPDATE" )
+        }
+        elsif ( $options->{cmd} eq "UPDATE" )
         {
             # store the new price, name etc into database using framework method
             my $ret = $self->SUPER::NewUpdateData($options);
@@ -377,5 +378,26 @@ sub checkRights
 
     return $self->SUPER::checkRights( $session, $rights, $table, $id );
 }
+
+
+sub deleteUndeleteDataset
+{
+    my $self    = shift;
+    my $options = shift;
+
+
+    my $ok = $self->SUPER::deleteUndeleteDataset($options);
+
+    if ( $options->{table} eq 'transactions' )
+    {
+        $self->update_amount_missing(
+            $options->{columns}->{ 'transactions.project_id' },
+            $options
+        );
+    }
+
+    return $ok;
+}
+
 
 1;

@@ -8,7 +8,8 @@ use Data::Dumper;
 
 our @ISA;
 
-sub new {
+sub new
+{
     my $proto  = shift;
     my $class  = ref($proto) || $proto;
     my $self   = shift;
@@ -19,10 +20,18 @@ sub new {
     return $self;
 }
 
-sub updateProjectVal {
+sub updateProjectVal
+{
     my $self    = shift;
     my $projid  = shift;
     my $options = shift;
+
+    ### What this function does: ###
+    # 1. fetch all fundings for a specific project from database
+    # 1.1. calculate sum of them.
+    # 2. fetch projects cost from database
+    # 3. write cost-sum_of_fundings to database
+    ##############################################################
 
     my $db            = $self->getDBBackend( $options->{table} );
     my $db_result_set = undef;
@@ -51,11 +60,17 @@ sub updateProjectVal {
       )
     {
         my $sum_of_fundings = 0;
+
+        # process all results, build sum of them
         foreach my $curline ( @{ $db_result_set->[0] } )
         {
+            # extract one funding from the result set
             my $funding = $curline->{ $options->{table} . $TSEP . "value" };
+
+            # replaces commas in funding through . for further calculation
             $funding =~ s/\,/\./g;
 
+            # check for correct format
             unless ( $funding =~ m,^\d+(\.\d+)?$, )
             {
                 my $err = "Invalid number "
@@ -66,26 +81,32 @@ sub updateProjectVal {
                 return $err;
             }
 
+            # build sum of all fundings
             $sum_of_fundings += $funding;
         }
 
         my $project_cost = undef;
 
-        if (defined($db_result_set = $db->getDataSet(
-                    {
-                        table   => "projects",
-                        simple  => 1,
-                        id      => $projid,
-                        session => $options->{curSession},
-                    })
-            )
+        # fetch the project cost from the database
+        my $db_result_set = $db->getDataSet(
+            {
+                table   => "projects",
+                simple  => 1,
+                id      => $projid,
+                session => $options->{curSession},
+            });
+
+        # only db_result_set if it valid
+        if ( defined( $db_result_set )
             && ( ref($db_result_set) eq "ARRAY" )
             && ( scalar( @{ $db_result_set->[0] } ) == 1 )
           )
         {
+            # extract project_cost from result set
             $project_cost = $db_result_set->[0]->[0]->{ "projects" . $TSEP . "cost" };
             $project_cost =~ s/\,/\./g;
 
+            # abort if wrong format
             unless ( $project_cost =~ m,^\d+(\.\d+)?$, )
             {
                 my $err =
@@ -104,19 +125,24 @@ sub updateProjectVal {
             return $err;
         }
 
-        print "VAL:" . ( $project_cost - $sum_of_fundings ) . "\n";
-
-        my $ret2 = $db->updateDataSet(
+        # WRITE new amount_missing to database
+        $db->updateDataSet(
             {
-                table => "projects",
-                id    => $projid,
+                table   => "projects",
+                id      => $projid,
                 columns =>
-                  { "projects" . $TSEP . "amount_missing" => $project_cost - $sum_of_fundings, },
+                {
+                        "projects"
+                      . $TSEP                # the new amount_missing
+                      . "amount_missing" => $project_cost - $sum_of_fundings,
+                },
                 session => $options->{curSession},
-            });
+            }
+        );
     }
-    else {
-        my $err = "No project id in transaction!";
+    else
+    {    
+        my $err = "Writing new amount missing failed. No project id in transaction!";
         Log( $err, $ERROR );
         return $err;
     }

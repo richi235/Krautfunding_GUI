@@ -174,13 +174,12 @@ sub NewUpdateData {
         return undef;
     }
 
-    # make that: if user creates new transaction automatically his user id is set for the transaction
     if ( $options->{table} eq "transactions" )
     {
         #checkRights returns a undefined, if user and session match and an defined value otherwise
         if ( defined( $self->checkRights( $options->{curSession}, $ADMIN ) ) )
         {
-            # set the user_id
+            # if user creates new transaction automatically his user id is set for the transaction
             $options->{columns}->{ $options->{table} . $TSEP . "user_id" } =
                 $options->{curSession} ->{ $USERSTABLENAME . $TSEP . $UNIQIDCOLUMNNAME };
         }
@@ -230,46 +229,6 @@ sub NewUpdateData {
               $options->{curSession}->{'users.id'};
         }
 
-        if ( $options->{cmd} eq "UPDATE" )   # a attribute of an existing project is changed
-        {
-            # fetch the old value of "cost" from the Database:
-            my $db         = $self->getDBBackend( $options->{table} );
-            my $result_set = $db->getDataSet(
-                {
-                    table   => $options->{table},
-                    session => $options->{curSession},
-                    id      => $options->{id}
-                }
-            );
-
-            my $old_project_cost;
-
-            # only extract from result set if we got correct data
-            if ( ref($result_set) eq "ARRAY" ) {
-                $old_project_cost =
-                  $result_set->[0]->[0]->{ $options->{table} . $TSEP . 'cost' };
-            }
-            else {
-                log(
-                    "Wanted to get project name from id, got no or corrupted data"
-                );
-            }
-            # done fetching old value of "cost"
-
-            my $new_price = $options->{columns}->{'projects.cost'};  # new price we get from user request
-
-            if ( $old_project_cost !=
-                $new_price )          # if project cost has been changed
-            {
-                my $price_increasing_amount =
-                  $new_price -
-                  $old_project_cost
-                  ; # can also be a negative value, calculations will still be correct
-                $options->{columns}->{'projects.amount_missing'} +=
-                  $price_increasing_amount;
-            }
-
-        }
         if ( $options->{id} )
         {
             my $ret = $self->SUPER::NewUpdateData($options);

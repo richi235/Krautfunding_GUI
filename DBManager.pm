@@ -20,7 +20,7 @@ sub new
     return $self;
 }
 
-sub updateProjectVal
+sub update_amount_missing
 {
     my $self    = shift;
     my $projid  = shift;
@@ -160,8 +160,7 @@ sub NewUpdateData {
         && $options->{cmd}
         && $options->{columns} )
     {
-        Log(
-            "DBManager: NewUpdateData: Missing parameters: table:"
+        Log("DBManager: NewUpdateData: Missing parameters: table:"
               . $options->{table}
               . ":curSession:"
               . $options->{curSession} . ": !",
@@ -176,16 +175,21 @@ sub NewUpdateData {
         #checkRights returns a undefined, if user and session match and an defined value otherwise
         if ( defined( $self->checkRights( $options->{curSession}, $ADMIN ) ) )
         {
+            # set the user_id
             $options->{columns}->{ $options->{table} . $TSEP . "user_id" } =
                 $options->{curSession} ->{ $USERSTABLENAME . $TSEP . $UNIQIDCOLUMNNAME };
         }
 
+        
+        # update amount_missing with every new or changed transaction:
         if ( $options->{columns}->{ $options->{table} . $TSEP . "project_id" } )
         {
+            # first write the new transaction to database via framework method
             my $ret = $self->SUPER::NewUpdateData($options);
-            $self->updateProjectVal(
-                $options->{columns}
-                  ->{ $options->{table} . $TSEP . "project_id" },
+
+            # than update the amount_missing of the project
+            $self->update_amount_missing(
+                $options->{columns}->{ $options->{table} . $TSEP . "project_id" },
                 $options
             );
             return $ret;
@@ -199,7 +203,8 @@ sub NewUpdateData {
 
     # makes that: if a new user registers, set the correct admin and deleted flag for this user.
     if ( $options->{table} eq "users" )
-    {    #checkRights returns undefined, if user and session match and an defined value otherwise
+    {
+        #checkRights returns undefined, if user and session match and an defined value otherwise
         if ( defined( $self->checkRights( $options->{curSession}, $ADMIN ) ) ) {
 
             # options->{columns}->... contains the new data from the user to be set in the database
@@ -220,8 +225,7 @@ sub NewUpdateData {
               $options->{curSession}->{'users.id'};
         }
 
-        if ( $options->{cmd} eq
-            "UPDATE" )    # a attribute of an existing project is changed
+        if ( $options->{cmd} eq "UPDATE" )   # a attribute of an existing project is changed
         {
             # fetch the old value of "cost" from the Database:
             my $db         = $self->getDBBackend( $options->{table} );
@@ -245,12 +249,9 @@ sub NewUpdateData {
                     "Wanted to get project name from id, got no or corrupted data"
                 );
             }
-
             # done fetching old value of "cost"
 
-            my $new_price =
-              $options->{columns}
-              ->{'projects.cost'};    # new price we get from user request
+            my $new_price = $options->{columns}->{'projects.cost'};  # new price we get from user request
 
             if ( $old_project_cost !=
                 $new_price )          # if project cost has been changed
@@ -264,9 +265,11 @@ sub NewUpdateData {
             }
 
         }
-        if ( $options->{id} ) {
+        if ( $options->{id} )
+        {
             my $ret = $self->SUPER::NewUpdateData($options);
-            $self->updateProjectVal( $options->{id}, $options );
+
+            $self->update_amount_missing( $options->{id}, $options );
             return $ret;
         }
     }

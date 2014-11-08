@@ -45,13 +45,13 @@ sub updateProjectVal
         "(" . $options->{table} . $TSEP . "project_id = '" . $projid . "')" );
 
     # fetch all transactions for this projects from the database
-    my $db_result_set = $db->getDataSet(
+    $db_result_set = $db->getDataSet(
                 {
                     table    => $options->{table},
                     simple   => 1,
                     wherePre => $where,
                     session  => $options->{curSession},
-                })
+                });
 
     # only process transactions, if we got valid data:    
     if (defined($db_result_set)
@@ -88,7 +88,7 @@ sub updateProjectVal
         my $project_cost = undef;
 
         # fetch the project cost from the database
-        my $db_result_set = $db->getDataSet(
+        $db_result_set = $db->getDataSet(
             {
                 table   => "projects",
                 simple  => 1,
@@ -274,7 +274,8 @@ sub NewUpdateData {
     $self->SUPER::NewUpdateData($options);
 }
 
-sub checkRights {
+sub checkRights
+{
     my $self    = shift;
     my $session = shift;
     my $rights  = shift;            # what we are asked for, if it's allowed

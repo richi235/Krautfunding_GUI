@@ -69,7 +69,6 @@ sub getDB {
          "deleted" => {
             type => $DELETEDCOLUMNNAME,
             order => 5,
-            # hidden => 1,
          },
       }
    };
@@ -107,6 +106,10 @@ sub getDB {
             showInSelect => 1,
             type => "double",
             order => 3,
+         },
+         "deleted" => {
+            type => $DELETEDCOLUMNNAME,
+            order => 77,
          },
       }
    };

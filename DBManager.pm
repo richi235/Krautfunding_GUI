@@ -19,6 +19,68 @@ sub new {
     return $self;
 }
 
+sub updateProjectVal {
+   my $self = shift;
+   my $projid = shift;
+   my $options = shift;
+   my $db = $self->getDBBackend($options->{table});
+   my $ret = undef;
+   my $where = $self->Where_Pre({
+      table      => $options->{table},
+      curSession => $options->{curSession},
+   });
+   push(@$where, "(".$options->{table}.$TSEP."project_id = '".$projid."')");
+   if (defined($ret = $db->getDataSet({
+      table     => $options->{table},
+      simple    => 1,
+      session   => $options->{curSession},
+   })) && (ref($ret) eq "ARRAY") && (scalar(@{$ret->[0]}))) {
+      my $val = 0;
+      foreach my $curline (@{$ret->[0]}) {
+         my $curval = $curline->{$options->{table}.$TSEP."value"};
+         $curval =~ s/\,/\./g;
+         unless ($curval =~ m,^\d+(\.\d+)?$,) {
+            my $err = "Invalid number ".$curval." in transation with id ".$curline->{$options->{table}.$TSEP.$UNIQIDCOLUMNNAME};
+            Log($err, $ERROR);
+            return $err;
+         }                     
+         $val += $curval;
+      }
+      my $costs = undef;
+      if (defined($ret = $db->getDataSet({
+         table     => "projects",
+         simple    => 1,
+         id        => $projid,
+         session   => $options->{curSession},
+      })) && (ref($ret) eq "ARRAY") && (scalar(@{$ret->[0]}) == 1)) {
+         $costs = $ret->[0]->[0]->{"projects".$TSEP."cost"};
+         $costs =~ s/\,/\./g;
+         unless ($costs =~ m,^\d+(\.\d+)?$,) {
+            my $err = "Invalid costs '".$costs."' format for project with id ".$projid;
+            Log($err, $ERROR);
+            return $err;
+         }
+      } else {
+         my $err = "No costs format for project with id ".$projid;
+         Log($err, $ERROR);
+         return $err;
+      }
+      print "VAL:".($costs-$val)."\n";
+      my $ret2 = $db->updateDataSet({
+         table => "projects",
+         id => $projid,
+         columns => {
+            "projects".$TSEP."amount_missing" => $costs-$val,
+         },
+         session => $options->{curSession},
+      });
+   } else {
+      my $err = "No project id in transaction!";
+      Log($err, $ERROR);
+      return $err;
+   }
+}
+
 sub NewUpdateData {
     my $self       = shift;
     my $options    = shift;
@@ -49,6 +111,15 @@ sub NewUpdateData {
               $options->{curSession}
               ->{ $USERSTABLENAME . $TSEP . $UNIQIDCOLUMNNAME };
         }
+            if ($options->{columns}->{$options->{table}.$TSEP."project_id"}) {
+               my $ret = $self->SUPER::NewUpdateData($options);
+               $self->updateProjectVal($options->{columns}->{$options->{table}.$TSEP."project_id"}, $options);
+               return $ret;
+            } else {
+               my $err = "No transactions found!?";
+               Log($err, $ERROR);
+               return $err;
+            }
     }
 
 # makes that: if a new user registers, set the correct admin and deleted flag for this user.
@@ -117,6 +188,11 @@ sub NewUpdateData {
                   $price_increasing_amount;
             }
 
+        }
+        if ($options->{id}) {
+           my $ret = $self->SUPER::NewUpdateData($options);
+           $self->updateProjectVal($options->{id}, $options);
+           return $ret;
         }
     }
 

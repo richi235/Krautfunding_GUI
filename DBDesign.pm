@@ -64,6 +64,7 @@ sub getDB {
             label => "Fehlender Betrag",
             type => "double",
             order => 2,
+            syntaxcheck => '^\-?\d+(\.\d+)?$',
          },
          "deleted" => {
             type => $DELETEDCOLUMNNAME,

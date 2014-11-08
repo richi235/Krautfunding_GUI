@@ -20,66 +20,98 @@ sub new {
 }
 
 sub updateProjectVal {
-   my $self = shift;
-   my $projid = shift;
-   my $options = shift;
-   my $db = $self->getDBBackend($options->{table});
-   my $ret = undef;
-   my $where = $self->Where_Pre({
-      table      => $options->{table},
-      curSession => $options->{curSession},
-   });
-   push(@$where, "(".$options->{table}.$TSEP."project_id = '".$projid."')");
-   if (defined($ret = $db->getDataSet({
-      table     => $options->{table},
-      simple    => 1,
-      wherePre  => $where,
-      session   => $options->{curSession},
-   })) && (ref($ret) eq "ARRAY") && (scalar(@{$ret->[0]}))) {
-      my $val = 0;
-      foreach my $curline (@{$ret->[0]}) {
-         my $curval = $curline->{$options->{table}.$TSEP."value"};
-         $curval =~ s/\,/\./g;
-         unless ($curval =~ m,^\d+(\.\d+)?$,) {
-            my $err = "Invalid number ".$curval." in transation with id ".$curline->{$options->{table}.$TSEP.$UNIQIDCOLUMNNAME};
-            Log($err, $ERROR);
+    my $self    = shift;
+    my $projid  = shift;
+    my $options = shift;
+    my $db      = $self->getDBBackend( $options->{table} );
+    my $ret     = undef;
+    my $where   = $self->Where_Pre(
+        {
+            table      => $options->{table},
+            curSession => $options->{curSession},
+        }
+    );
+    push( @$where,
+        "(" . $options->{table} . $TSEP . "project_id = '" . $projid . "')" );
+    if (
+        defined(
+            $ret = $db->getDataSet(
+                {
+                    table    => $options->{table},
+                    simple   => 1,
+                    wherePre => $where,
+                    session  => $options->{curSession},
+                }
+            )
+        )
+        && ( ref($ret) eq "ARRAY" )
+        && ( scalar( @{ $ret->[0] } ) )
+      )
+    {
+        my $val = 0;
+        foreach my $curline ( @{ $ret->[0] } ) {
+            my $curval = $curline->{ $options->{table} . $TSEP . "value" };
+            $curval =~ s/\,/\./g;
+            unless ( $curval =~ m,^\d+(\.\d+)?$, ) {
+                my $err =
+                    "Invalid number "
+                  . $curval
+                  . " in transation with id "
+                  . $curline->{ $options->{table} . $TSEP . $UNIQIDCOLUMNNAME };
+                Log( $err, $ERROR );
+                return $err;
+            }
+            $val += $curval;
+        }
+        my $costs = undef;
+        if (
+            defined(
+                $ret = $db->getDataSet(
+                    {
+                        table   => "projects",
+                        simple  => 1,
+                        id      => $projid,
+                        session => $options->{curSession},
+                    }
+                )
+            )
+            && ( ref($ret) eq "ARRAY" )
+            && ( scalar( @{ $ret->[0] } ) == 1 )
+          )
+        {
+            $costs = $ret->[0]->[0]->{ "projects" . $TSEP . "cost" };
+            $costs =~ s/\,/\./g;
+            unless ( $costs =~ m,^\d+(\.\d+)?$, ) {
+                my $err =
+                    "Invalid costs '"
+                  . $costs
+                  . "' format for project with id "
+                  . $projid;
+                Log( $err, $ERROR );
+                return $err;
+            }
+        }
+        else {
+            my $err = "No costs format for project with id " . $projid;
+            Log( $err, $ERROR );
             return $err;
-         }                     
-         $val += $curval;
-      }
-      my $costs = undef;
-      if (defined($ret = $db->getDataSet({
-         table     => "projects",
-         simple    => 1,
-         id        => $projid,
-         session   => $options->{curSession},
-      })) && (ref($ret) eq "ARRAY") && (scalar(@{$ret->[0]}) == 1)) {
-         $costs = $ret->[0]->[0]->{"projects".$TSEP."cost"};
-         $costs =~ s/\,/\./g;
-         unless ($costs =~ m,^\d+(\.\d+)?$,) {
-            my $err = "Invalid costs '".$costs."' format for project with id ".$projid;
-            Log($err, $ERROR);
-            return $err;
-         }
-      } else {
-         my $err = "No costs format for project with id ".$projid;
-         Log($err, $ERROR);
-         return $err;
-      }
-      print "VAL:".($costs-$val)."\n";
-      my $ret2 = $db->updateDataSet({
-         table => "projects",
-         id => $projid,
-         columns => {
-            "projects".$TSEP."amount_missing" => $costs-$val,
-         },
-         session => $options->{curSession},
-      });
-   } else {
-      my $err = "No project id in transaction!";
-      Log($err, $ERROR);
-      return $err;
-   }
+        }
+        print "VAL:" . ( $costs - $val ) . "\n";
+        my $ret2 = $db->updateDataSet(
+            {
+                table => "projects",
+                id    => $projid,
+                columns =>
+                  { "projects" . $TSEP . "amount_missing" => $costs - $val, },
+                session => $options->{curSession},
+            }
+        );
+    }
+    else {
+        my $err = "No project id in transaction!";
+        Log( $err, $ERROR );
+        return $err;
+    }
 }
 
 sub NewUpdateData {
@@ -112,23 +144,29 @@ sub NewUpdateData {
               $options->{curSession}
               ->{ $USERSTABLENAME . $TSEP . $UNIQIDCOLUMNNAME };
         }
-            if ($options->{columns}->{$options->{table}.$TSEP."project_id"}) {
-               my $ret = $self->SUPER::NewUpdateData($options);
-               $self->updateProjectVal($options->{columns}->{$options->{table}.$TSEP."project_id"}, $options);
-               return $ret;
-            } else {
-               my $err = "No transactions found!?";
-               Log($err, $ERROR);
-               return $err;
-            }
+        if ( $options->{columns}->{ $options->{table} . $TSEP . "project_id" } )
+        {
+            my $ret = $self->SUPER::NewUpdateData($options);
+            $self->updateProjectVal(
+                $options->{columns}
+                  ->{ $options->{table} . $TSEP . "project_id" },
+                $options
+            );
+            return $ret;
+        }
+        else {
+            my $err = "No transactions found!?";
+            Log( $err, $ERROR );
+            return $err;
+        }
     }
 
-# makes that: if a new user registers, set the correct admin and deleted flag for this user.
+    # makes that: if a new user registers, set the correct admin and deleted flag for this user.
     if ( $options->{table} eq "users" )
-    { #checkRights returns undefined, if user and session match and an defined value otherwise
+    {    #checkRights returns undefined, if user and session match and an defined value otherwise
         if ( defined( $self->checkRights( $options->{curSession}, $ADMIN ) ) ) {
 
-# options->{columns}->... contains the new data from the user to be set in the database
+            # options->{columns}->... contains the new data from the user to be set in the database
             $options->{columns}->{ $options->{table} . $TSEP . "admin" }  = 0;
             $options->{columns}->{ $options->{table} . $TSEP . "modify" } = 0;
         }
@@ -137,11 +175,11 @@ sub NewUpdateData {
     if ( $options->{table} eq "projects" ) {
         if ( $options->{cmd} eq "NEW" ) {
 
-# if creating new project: autmatically set the "amount missing" to the complete cost
+            # if creating new project: autmatically set the "amount missing" to the complete cost
             $options->{columns}->{'projects.amount_missing'} =
               $options->{columns}->{'projects.cost'};
 
-     # if creating new project: automatically set contact_person to current user
+            # if creating new project: automatically set contact_person to current user
             $options->{columns}->{'projects.contact_person_id'} =
               $options->{curSession}->{'users.id'};
         }
@@ -168,7 +206,7 @@ sub NewUpdateData {
             }
             else {
                 log(
-"Wanted to get project name from id, got no or corrupted data"
+                    "Wanted to get project name from id, got no or corrupted data"
                 );
             }
 
@@ -190,10 +228,10 @@ sub NewUpdateData {
             }
 
         }
-        if ($options->{id}) {
-           my $ret = $self->SUPER::NewUpdateData($options);
-           $self->updateProjectVal($options->{id}, $options);
-           return $ret;
+        if ( $options->{id} ) {
+            my $ret = $self->SUPER::NewUpdateData($options);
+            $self->updateProjectVal( $options->{id}, $options );
+            return $ret;
         }
     }
 
@@ -218,22 +256,22 @@ sub checkRights {
             return undef;
         }
 
-   # if we are asked for the modify right on table projects in an active session
-   # this happens if user wants to add new project or change a existing one
+        # if we are asked for the modify right on table projects in an active session
+        # this happens if user wants to add new project or change a existing one
         if (   ( $table eq 'projects' )
             && ( $rights & $MODIFY )
             && !defined( $self->SUPER::checkRights( $session, $ACTIVESESSION ) )
           )
         {
 
-# when there's no defined id we're not working on a existing object but creating a new one
-# this shall be allowed for every user, therefore returning undef
+            # when there's no defined id we're not working on a existing object but creating a new one
+            # this shall be allowed for every user, therefore returning undef
             if ( !defined($id) ) {
                 return undef;
             }
             else {
-# Now we are editing an existing project
-# the following lines make sure, the user can only edit his own projects, none of other people
+                # Now we are editing an existing project
+                # the following lines make sure, the user can only edit his own projects, none of other people
 
                 my $db = $self->getDBBackend($table);
 
@@ -256,15 +294,15 @@ sub checkRights {
                 }
                 else {
                     log(
-"Wanted to get project name from id, got no or corrupted data"
+                        "Wanted to get project name from id, got no or corrupted data"
                     );
                 }
 
-# here we check if the user id of the project (gotten from the database) is the one of the current user
-# if not return an error
+                # here we check if the user id of the project (gotten from the database) is the one of the current user
+                # if not return an error
                 if ( $session->{"users.id"} != $contact_person_id_of_project ) {
                     return [
-"Forbidden: User tried to edit or delete Project of other User",
+                        "Forbidden: User tried to edit or delete Project of other User",
                         $WARNING
                     ];
                 }
@@ -281,14 +319,14 @@ sub checkRights {
             && !defined( $self->SUPER::checkRights( $session, $ACTIVESESSION ) )
           )
         {
-# when there's no defined id we're not working on a existing object but creating a new one
-# this shall be allowed for every user, therefore returning undef
+            # when there's no defined id we're not working on a existing object but creating a new one
+            # this shall be allowed for every user, therefore returning undef
             if ( !defined($id) ) {
                 return undef;
             }
             else {
-# Now we are editing an existing project
-# the following lines make sure, the user can only edit his own projects, none of other people
+                # Now we are editing an existing project
+                # the following lines make sure, the user can only edit his own projects, none of other people
 
                 my $db = $self->getDBBackend($table);
 
@@ -310,15 +348,15 @@ sub checkRights {
                 }
                 else {
                     log(
-"Wanted to get project name from id, got no or corrupted data"
+                        "Wanted to get project name from id, got no or corrupted data"
                     );
                 }
 
-# here we check if the user id of the funder (gotten from the database) is the one of the current user
-# if not return an error
+                # here we check if the user id of the funder (gotten from the database) is the one of the current user
+                # if not return an error
                 if ( $session->{"users.id"} != $user_id_of_funder ) {
                     return [
-"Forbidden: User tried to edit or delete funding of other User",
+                        "Forbidden: User tried to edit or delete funding of other User",
                         $WARNING
                     ];
                 }

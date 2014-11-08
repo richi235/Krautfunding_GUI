@@ -33,6 +33,7 @@ sub updateProjectVal {
    if (defined($ret = $db->getDataSet({
       table     => $options->{table},
       simple    => 1,
+      wherePre  => $where,
       session   => $options->{curSession},
    })) && (ref($ret) eq "ARRAY") && (scalar(@{$ret->[0]}))) {
       my $val = 0;

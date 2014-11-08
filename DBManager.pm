@@ -217,9 +217,10 @@ sub NewUpdateData {
         }
     }
 
-    if ( $options->{table} eq "projects" ) {
-        if ( $options->{cmd} eq "NEW" ) {
-
+    if ( $options->{table} eq "projects" )
+    {
+        if ( $options->{cmd} eq "NEW" )
+        {
             # if creating new project: autmatically set the "amount missing" to the complete cost
             $options->{columns}->{'projects.amount_missing'} =
               $options->{columns}->{'projects.cost'};
@@ -227,12 +228,12 @@ sub NewUpdateData {
             # if creating new project: automatically set contact_person to current user
             $options->{columns}->{'projects.contact_person_id'} =
               $options->{curSession}->{'users.id'};
-        }
-
-        if ( $options->{id} )
+        } elsif ( $options->{cmd} eq "UPDATE" )
         {
+            # store the new price, name etc into database using framework method
             my $ret = $self->SUPER::NewUpdateData($options);
-
+            
+            # update the corresponding amount_missing of project
             $self->update_amount_missing( $options->{id}, $options );
             return $ret;
         }

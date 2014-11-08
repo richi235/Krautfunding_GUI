@@ -33,6 +33,11 @@ sub update_amount_missing
     # 3. write cost-sum_of_fundings to database
     ##############################################################
 
+
+    # this key needs to be overwritten, since it's possible
+    # this function is called from another context with another
+    # table in $options
+    $options->{table} = 'transactions';
     my $db            = $self->getDBBackend( $options->{table} );
     my $db_result_set = undef;
     my $where         = $self->Where_Pre(

@@ -68,7 +68,6 @@ sub update_amount_missing
     # only process transactions, if we got valid data:    
     if (defined($db_result_set)
         && ( ref($db_result_set) eq "ARRAY" )
-        && ( scalar( @{ $db_result_set->[0] } ) )
       )
     {
         my $sum_of_fundings = 0;
@@ -154,7 +153,7 @@ sub update_amount_missing
     }
     else
     {    
-        my $err = "Updating amount missing failed. No project id for transaction!";
+        my $err = "Updating amount_missing failed. No project_id for transaction!";
         Log( $err, $ERROR );
         return $err;
     }

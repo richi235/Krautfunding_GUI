@@ -392,17 +392,29 @@ sub deleteUndeleteDataset
     my $self    = shift;
     my $options = shift;
 
-
-    my $ok = $self->SUPER::deleteUndeleteDataset($options);
-
+    my $ok;
+    
+       # if a transaction gets deleted or undeleted update the amount missing
     if ( $options->{table} eq 'transactions' )
     {
-        $self->update_amount_missing(
-            $options->{columns}->{ 'transactions.project_id' },
-            $options
+        # get the project_id for this transaction from the db
+        my $project_id = $self->get_single_value_from_db(
+            $options->{session}, $options->{table},
+            'project_id',        $options->{id}
         );
-    }
 
+        # then delete transaction as usual
+        $ok = $self->SUPER::deleteUndeleteDataset($options);
+
+        # update_amount_missing looks for session as attribute with key curSession
+        # so this is needed
+        $options->{curSession} = $options->{session};
+
+        $self->update_amount_missing( $project_id , $options );
+    } else {
+        # otherwise just delete as usual
+        $ok = $self->SUPER::deleteUndeleteDataset($options);
+    }
     return $ok;
 }
 

@@ -13,18 +13,25 @@ sub new
     my $proto  = shift;
     my $class  = ref($proto) || $proto;
     my $self   = shift;
+    
     my $parent = $self ? ref($self) : "";
+
     @ISA = ($parent) if $parent;
     $self = $self ? $self : {};
+
     bless( $self, $class );
+
+    
+
+    
     return $self;
 }
 
 sub update_amount_missing
 {
-    my $self    = shift;
-    my $project_id  = shift;
-    my $options = shift;
+    my $self       = shift;
+    my $project_id = shift;
+    my $options    = shift;
 
     ### What this function does: ###
     # 1. fetch all fundings for a specific project from database

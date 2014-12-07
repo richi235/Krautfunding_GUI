@@ -76,7 +76,6 @@ sub getDB {
 
         label        => "Spenden",
         order        => 2,
-        realdelete   => 1,
         idcolumnname => "id",
 
         columns => {

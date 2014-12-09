@@ -30,5 +30,8 @@ Start your Crowdfunding managment with:
 Per default Krautfunding GUI listens on port: **8181**.   
 (This can be changed in the file ```dbm.cfg``` in the ADBGUI root folder, key: ```QooxdooListenPort```)
 
+## How it looks
+![screenshot](./doc/Krautfunding_gui_screenshot.png)
+
 
 

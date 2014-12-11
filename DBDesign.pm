@@ -100,6 +100,11 @@ sub getDB {
                 type         => "double",
                 order        => 3,
             },
+            "paid"  => {
+                label        => "bezahlt?",
+                type         => "boolean",
+                order        => 4,
+            },    
             "deleted" => {
                 type  => $DELETEDCOLUMNNAME,
                 order => 77,

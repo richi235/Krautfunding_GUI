@@ -337,36 +337,19 @@ sub checkRights
             else {
                 # Now we are editing an existing project
                 # the following lines make sure, the user can only edit his own projects, none of other people
-
-                my $db = $self->getDBBackend($table);
-
-                # the next ~10 lines get the id of the funder from the database
-                my $result_set = $db->getDataSet(
+                my $user_id_of_transaction = $self->get_single_value_from_db( 
                     {
-                        table   => $table,
-                        session => $session,
-                        id      => $id
-                    }
-                );
-
-                my $user_id_of_funder;
-
-                # only extract from result set if we got correct data
-                if ( ref($result_set) eq "ARRAY" ) {
-                    $user_id_of_funder =
-                      $result_set->[0]->[0]->{ $table . $TSEP . 'user_id' };
-                }
-                else {
-                    Log( "Wanted to get project name from id, got no or corrupted data");
-                }
+                        curSession => $session,
+                        table      => $table,
+                        column     => 'user_id',
+                        id         => $id
+                    }); # get the user_id of the funding we are editing
 
                 # here we check if the user id of the funder (gotten from the database) is the one of the current user
                 # if not return an error
-                if ( $session->{"users.id"} != $user_id_of_funder ) {
-                    return [
-                        "Forbidden: User tried to edit or delete funding of other User",
-                        $WARNING
-                    ];
+                if ( $session->{"users.id"} != $user_id_of_transaction ) {
+                    return [ "Forbidden: User tried to edit or delete funding of other User",
+                        $WARNING ];
                 }
                 else {
                     return undef;    # all checks passed, therefore return undef

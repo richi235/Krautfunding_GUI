@@ -212,7 +212,8 @@ sub onClientData {
 
 }
 
-sub onDelRow {
+sub onDelRow 
+{
     my $self       = shift;
     my $options    = shift;
     my $moreparams = shift;
@@ -228,13 +229,14 @@ sub onDelRow {
 
     my $return_value = $self->SUPER::onDelRow( $options, $moreparams );
 
-    if ( $options->{table} eq 'transactions' ) {
+    if ( $options->{table} eq 'transactions' ) 
+    {
         ### The following updates the amount_missing value in the footer ###
         # get the id of the current displayed project
         # needed to get the correct amount_missing
         my $current_filter = $self->{dbm}->getFilter( $options, $moreparams );
-        my $id_of_current_project =
-          $current_filter->{ "transactions" . $TSEP . "project_id" };
+        my $id_of_current_project = $current_filter->{ "transactions" . $TSEP . "project_id" };
+
         if ( !($id_of_current_project) ) {
             Log( "Project ID for amount missing in footer not found",
                 $WARNING );
@@ -242,8 +244,11 @@ sub onDelRow {
         }
 
         # draw the correct value into the new iframe:
-        $self->update_amount_missing_footer( $options->{"curSession"},
-            $id_of_current_project, 1 );
+        $self->update_amount_missing_footer( $options->{"curSession"}, $id_of_current_project, 1 );
+
+        # update the amount missing of a project in the project window everytime a funding gets deleted: 
+        $self->sendToQXForSession( $options->{connection}->{sessionid} || 0 ,
+            "updaterow ".CGI::escape( "projects" )." ".CGI::escape( $id_of_current_project || "" ) );
 
     }
 
@@ -474,7 +479,7 @@ sub onSaveEditEntry
         # update the line in the footer of the fundings window telling the amount missing
         $self->update_amount_missing_footer( $options->{"curSession"}, $id_of_current_project, 1 );
 
-        # update the amount missing of a project n the project winodw everytime funding gets changed or created: 
+        # update the amount missing of a project in the project window everytime a funding gets changed or created:
         $self->sendToQXForSession( $options->{connection}->{sessionid} || 0 ,
             "updaterow ".CGI::escape( "projects" )." ".CGI::escape( $id_of_current_project || "" ) );
 

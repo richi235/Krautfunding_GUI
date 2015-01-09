@@ -305,9 +305,7 @@ sub checkRights
                       ->{ $table . $TSEP . 'contact_person_id' };
                 }
                 else {
-                    log(
-                        "Wanted to get project name from id, got no or corrupted data"
-                    );
+                    Log( "Wanted to get project name from id, got no or corrupted data");
                 }
 
                 # here we check if the user id of the project (gotten from the database) is the one of the current user
@@ -359,9 +357,7 @@ sub checkRights
                       $result_set->[0]->[0]->{ $table . $TSEP . 'user_id' };
                 }
                 else {
-                    log(
-                        "Wanted to get project name from id, got no or corrupted data"
-                    );
+                    Log( "Wanted to get project name from id, got no or corrupted data");
                 }
 
                 # here we check if the user id of the funder (gotten from the database) is the one of the current user

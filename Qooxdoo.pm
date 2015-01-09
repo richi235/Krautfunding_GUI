@@ -156,7 +156,7 @@ sub onClientData {
               $result_set->[0]->[0]->{ $options->{table} . $TSEP . 'Name' };
         }
         else {
-            log("Wanted to get project name from id, got no or corrupted data");
+            Log("Wanted to get project name from id, got no or corrupted data");
         }
 
         # display the window with the correct title
@@ -414,7 +414,7 @@ sub update_amount_missing_footer {
           $result_set->[0]->[0]->{ "projects" . $TSEP . 'amount_missing' };
     }
     else {
-        log("Wanted to get project name from id, got no or corrupted data");
+        Log("Wanted to get project name from id, got no or corrupted data");
     }
     ### done ###
 

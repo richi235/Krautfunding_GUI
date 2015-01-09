@@ -432,7 +432,8 @@ sub update_amount_missing_footer {
           . CGI::escape($footer_html) );
 }
 
-sub onSaveEditEntry {
+sub onSaveEditEntry 
+{
     my $self       = shift;
     my $options    = shift;
     my $moreparams = shift;
@@ -460,19 +461,23 @@ sub onSaveEditEntry {
     my $return_value = $self->SUPER::onSaveEditEntry( $options, $moreparams );
 
     if ( $options->{table} eq 'transactions' ) {
-
+    
         # get the id of the current showed project from the filter
         my $current_filter = $self->{dbm}->getFilter( $options, $moreparams );
-        my $id_of_current_project =
-          $current_filter->{ "transactions" . $TSEP . "project_id" };
+        my $id_of_current_project = $current_filter->{ "transactions" . $TSEP . "project_id" };
+
         if ( !($id_of_current_project) ) {
-            Log( "Project ID for amount missing in footer not found",
-                $WARNING );
+            Log( "Project ID for amount missing in footer not found", $WARNING );
             return undef;
         }
 
-        $self->update_amount_missing_footer( $options->{"curSession"},
-            $id_of_current_project, 1 );
+        # update the line in the footer of the fundings window telling the amount missing
+        $self->update_amount_missing_footer( $options->{"curSession"}, $id_of_current_project, 1 );
+
+        # update the amount missing of a project n the project winodw everytime funding gets changed or created: 
+        $self->sendToQXForSession( $options->{connection}->{sessionid} || 0 ,
+            "updaterow ".CGI::escape( "projects" )." ".CGI::escape( $id_of_current_project || "" ) );
+
     }
 
     return $return_value;

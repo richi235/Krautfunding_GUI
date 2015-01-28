@@ -398,26 +398,14 @@ sub update_amount_missing_footer
     my $footer_identifier = "transactions_show_data_amount_missing";
 
     ### the following fetches the amount missing from the database ###
-    my $amount_missing;
-
-    my $db         = $self->{dbm}->getDBBackend("transactions");
-    my $result_set = $db->getDataSet(
+    my $amount_missing = $self->{dbm}->get_single_value_from_db(
         {
-            table   => "projects",
-            session => $session,
-            id      => $project_id
-        }
-    );
+            curSession => $session,
+            table      => "projects",
+            column     => "amount_missing",
+            id         => $project_id
+    });
 
-    # only work with result set if we got correct data
-    if ( ref($result_set) eq "ARRAY" ) {
-        $amount_missing =
-          $result_set->[0]->[0]->{ "projects" . $TSEP . 'amount_missing' };
-    }
-    else {
-        Log("Wanted to get project name from id, got no or corrupted data");
-    }
-    ### done ###
 
 # the footer for the project window
 # a html iframe is needed to set the right bound values in nice formatting in the qooxdoo framework

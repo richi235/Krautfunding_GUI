@@ -50,7 +50,7 @@ sub onAuthenticate {
         $poe_kernel->yield( sendToQX => "addbutton "
               . CGI::escape("") . " "
               . CGI::escape("new_account_button") . " "
-              . CGI::escape("Neuen Benuter anlegen") . " "
+              . CGI::escape("Neuen Benutzer anlegen") . " "
               . CGI::escape("") . " "
               . CGI::escape("job=neweditentry,table=users") );
     }

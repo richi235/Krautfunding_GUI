@@ -388,7 +388,8 @@ sub onShow {
     return $return_value;
 }
 
-sub update_amount_missing_footer {
+sub update_amount_missing_footer
+{
     my $self                             = shift;
     my $session                          = shift;
     my $project_id                       = shift;
@@ -420,15 +421,26 @@ sub update_amount_missing_footer {
 
 # the footer for the project window
 # a html iframe is needed to set the right bound values in nice formatting in the qooxdoo framework
-    my $footer_html =
-"<table width=100%><tr><td>Fehlender Betrag: </td><td align=right> <b><font color=red>$amount_missing &euro; </font></b> </td></tr></table>";
+    my $footer_html;
+    
+    if ( $amount_missing > 0 ) {
+        $footer_html =
+        "<table width=100%>
+          <tr><td>Fehlender Betrag: </td><td align=right> <b><font color=red >$amount_missing &euro; </font></b> </td></tr>
+        </table>";
+    } else {
+        $footer_html =
+        "<table width=100%>
+          <tr><td>Fehlender Betrag: </td><td align=right> <b><font color=Lime >$amount_missing &euro; </font></b> </td></tr>
+          <tr> <td> </td> <td align=right> fertig gefunded :)</td> </tr>
+        </table>";
+    }
 
     # only wipe the iframe if we are called by onSaveEditEntry()
     # This is weird but actually needed
     # if it gets called always, the value is not drawn when called from onShow()
     if ($called_by_save_edit_or_by_delete) {
-        $poe_kernel->yield(
-            sendToQX => "iframewriteclose " . $footer_identifier );
+        $poe_kernel->yield(sendToQX => "iframewriteclose " . $footer_identifier );
     }
 
     # now, write the data into the iframe

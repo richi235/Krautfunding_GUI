@@ -249,6 +249,62 @@ sub NewUpdateData {
     $self->SUPER::NewUpdateData($options);
 }
 
+sub toggle_paid_status
+{
+   my $self           = shift; 
+   my $session        = shift;
+   my $transaction_id = shift;
+   my $moreparams     = shift;
+   
+   unless( !$moreparams
+        && $session
+        && $transaction_id)
+   {
+        Log("DBManager: toggle_paid_status Missing parameters " , $ERROR);
+        return undef;
+   }
+   
+   if ( defined( $self->checkRights() ) ) {
+       # todo
+   } 
+
+   # get paid-attribute from db
+   my $paid = $self->get_single_value_from_db(
+       {
+            curSession => $session,
+            table      => "transactions",
+            column     => "paid",
+            id         => $transaction_id
+        });
+
+   # set it
+   if ( $paid != 0 ) {
+       $paid = 0;
+   } else {
+       $paid = 1;
+   }
+   
+
+   # save it back to db
+   my $db = $self->getDBBackend("transactions");
+   my $ret = $db->updateDataSet(
+        {
+            table    => "transactions",
+            id       => $transaction_id,
+            columns  => { "transactions.paid" => $paid },
+            session  => $session
+        }
+    );
+   
+    unless ( defined($ret) )
+    {
+        Log("toggle_paid_status: FAILED: SQL Query failed.", $WARNING);
+        return undef;
+    }
+
+   return $ret;
+}    
+
 sub checkRights
 {
     my $self    = shift;

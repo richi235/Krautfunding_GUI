@@ -393,14 +393,9 @@ sub checkRights
             else {
                 # Now we are editing an existing project
                 # the following lines make sure, the user can only edit his own projects, none of other people
-                my $user_id_of_transaction = $self->get_single_value_from_db( 
-                    {
-                        curSession => $session,
-                        table      => $table,
-                        column     => 'user_id',
-                        id         => $id
-                    }); # get the user_id of the funding we are editing
+                my $current_transaction = $self->get_single_row_from_db( $session, $table, $id ); # get current_transaction
 
+                my $user_id_of_transaction = $current_transaction->{ "transactions.user_id" } ;
                 # here we check if the user id of the funder (gotten from the database) is the one of the current user
                 # if not return an error
                 if ( $session->{"users.id"} != $user_id_of_transaction ) {
@@ -410,11 +405,8 @@ sub checkRights
                 else {
                     return undef;    # all checks passed, therefore return undef
                 }
-
             }
-
         }
-
     }
 
     return $self->SUPER::checkRights( $session, $rights, $table, $id );

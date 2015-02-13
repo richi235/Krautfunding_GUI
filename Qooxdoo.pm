@@ -169,8 +169,7 @@ sub onClientData {
     if ( ( $options->{job} eq "saveedit" ) || ( $options->{job} eq "newedit" ) )
     {
         if ( $options->{table} eq "transactions" ) {
-            my $id = $options->{$UNIQIDCOLUMNNAME}
-              || $options->{connection}->{"q"}
+            my $id = $options->{$UNIQIDCOLUMNNAME} || $options->{connection}->{"q"}
               ->param( $self->{dbm}->getIdColumnName( $options->{table} ) );
             my $params = {
                 crosslink         => $options->{crosslink},
@@ -191,15 +190,10 @@ sub onClientData {
 
 # set project for this transaction to current project (gotten from the filter setting)
             $params->{columns}->{"transactions.project_id"} =
-              $params->{curSession}->{filter}->{transactions}
-              ->{"transactions.project_id"};
+              $params->{curSession}->{filter}->{transactions}->{"transactions.project_id"};
 
-            # print("\e[1;31m onClient Data: Inhalt von \$params Array\n");
-            # print(Dumper($params));
-            # print("\e[0m");
             my $returned_value = $self->onSaveEditEntry($params);
             return $returned_value;
-
         }
     }
 

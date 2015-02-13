@@ -166,6 +166,16 @@ sub onClientData {
         return;
     }
 
+    if ( $options->{job} eq "toggle_paid" )
+    {
+        $self->{dbm}->toggle_paid_status($options->{curSession}, $options->{id} );
+        $self->sendToQXForSession( $options->{connection}->{sessionid} || 0 ,
+            "updaterow ".CGI::escape( "transactions" )." ".CGI::escape( $options->{id} || "" ) );
+
+        return undef; # don't call framework method because framework
+                      # doesn't know the job "toggle_paid"
+    }
+    
     if ( ( $options->{job} eq "saveedit" ) || ( $options->{job} eq "newedit" ) )
     {
         if ( $options->{table} eq "transactions" ) {

@@ -81,12 +81,7 @@ sub onAuthenticated {
 
     # show the projects button, to open table for projects
     # only show this button if user is not admin
-    if (
-        defined(
-            my $err =
-              $self->{dbm}->checkRights( $options->{curSession}, $ADMIN )
-        )
-      )
+    if (defined(  $self->{dbm}->checkRights( $options->{curSession}, $ADMIN)  ))
     {
         $poe_kernel->yield( sendToQX => "addbutton "
               . CGI::escape("") . " "
@@ -211,6 +206,7 @@ sub onClientData {
     $self->SUPER::onClientData($options);
 
 }
+
 
 sub onDelRow 
 {
@@ -634,6 +630,15 @@ sub getTableButtonsDef {
                       . ( $options->{smallbuttons} ? "16" : "32" )
                       . "/actions/list-remove.png",
                     action => "delrow",
+                    bindto => "row",
+                },
+                {
+                    name  => "toggle_paid",
+                    label => "Bezahlt-status_aendern",
+                    image => "resource/qx/icon/Tango/"
+                      . ( $options->{smallbuttons} ? "16" : "32" )
+                      . "/actions/list-remove.png",
+                    action => "toggle_paid",
                     bindto => "row",
                 }
             )
